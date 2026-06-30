@@ -1,3 +1,9 @@
 namespace sampleAPI.Models;
 
-public record Product(int Id, string Name, string Description, decimal Price);
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
