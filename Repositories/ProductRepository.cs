@@ -16,9 +16,7 @@ public class ProductRepository : IProductRepository
 
     public Product? GetById(int id)
     {
-        Product p = _products.FirstOrDefault(p => p.Id == id);
-        if(p !=null)
-           p.Price = 100;
+        Product? p = _products.FirstOrDefault(p => p.Id == id);
         return p;
     }
 
