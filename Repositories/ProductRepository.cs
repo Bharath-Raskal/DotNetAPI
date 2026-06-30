@@ -1,53 +1,59 @@
+using Dapper;
 using sampleAPI.Models;
+using System.Data;
 
 namespace sampleAPI.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private List<Product> _products = new()
+    private readonly IDbConnection _connection;
+
+    public ProductRepository(IDbConnection connection)
     {
-        new Product { Id = 1, Name = "Sample Product", Description = "A sample product description", Price = 9.99m },
-        new Product { Id = 2, Name = "Another Product", Description = "Another sample description", Price = 19.99m },
-    };
+        _connection = connection;
+        _connection.Open();
+    }
 
-    private int _nextId = 3;
-
-    public IEnumerable<Product> GetAll() => _products;
+    public IEnumerable<Product> GetAll()
+    {
+        return _connection.Query<Product>(
+            "SELECT Id, Name, Description, Price FROM Products ORDER BY Id");
+    }
 
     public Product? GetById(int id)
     {
-        Product? p = _products.FirstOrDefault(p => p.Id == id);
-        return p;
+        return _connection.QueryFirstOrDefault<Product>(
+            "SELECT Id, Name, Description, Price FROM Products WHERE Id = @Id",
+            new { Id = id });
     }
 
     public Product Add(Product product)
     {
-        product.Id = _nextId++;
-        _products.Add(product);
+        var sql = @"
+            INSERT INTO Products (Name, Description, Price)
+            VALUES (@Name, @Description, @Price);
+            SELECT last_insert_rowid();";
+
+        var id = _connection.ExecuteScalar<long>(sql, product);
+        product.Id = (int)id;
         return product;
     }
 
     public bool Update(Product product)
     {
-        var index = _products.FindIndex(p => p.Id == product.Id);
-        if (index < 0)
-        {
-            return false;
-        }
+        var affectedRows = _connection.Execute(
+            "UPDATE Products SET Name = @Name, Description = @Description, Price = @Price WHERE Id = @Id",
+            product);
 
-        _products[index] = product;
-        return true;
+        return affectedRows > 0;
     }
 
     public bool Delete(int id)
     {
-        var existing = GetById(id);
-        if (existing is null)
-        {
-            return false;
-        }
+        var affectedRows = _connection.Execute(
+            "DELETE FROM Products WHERE Id = @Id",
+            new { Id = id });
 
-        _products.Remove(existing);
-        return true;
+        return affectedRows > 0;
     }
 }

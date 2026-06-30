@@ -57,6 +57,8 @@ node_modules/
 # Database files
 *.mdf
 *.ldf
+*.db-shm
+*.db-wal
 
 # OS generated files
 .DS_Store
